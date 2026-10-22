@@ -61,8 +61,8 @@ inline AABB circleAABB(const Circle& c, float fat_margin = 0.0f) {
 }
 
 inline float aabbSurfaceArea(const AABB& a) {
-    float w = a.max[0] - a.min[0];
-    float h = a.max[1] - a.min[1];
+    float w = std::max(0.0f, a.max[0] - a.min[0]);
+    float h = std::max(0.0f, a.max[1] - a.min[1]);
     return 2.0f * (w + h); // Perimeter in 2D = surface area for SAH
 }
 

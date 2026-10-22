@@ -61,8 +61,10 @@ static int buildNodeMedian(const std::vector<Circle>& circles,
             return (axis == 0) ? circles[a].x < circles[b].x : circles[a].y < circles[b].y;
         });
 
-    node.left = buildNodeMedian(circles, indices, start, mid, nodes, fat_margin);
-    node.right = buildNodeMedian(circles, indices, mid, end, nodes, fat_margin);
+    int left_child = buildNodeMedian(circles, indices, start, mid, nodes, fat_margin);
+    int right_child = buildNodeMedian(circles, indices, mid, end, nodes, fat_margin);
+    nodes[node_idx].left = left_child;
+    nodes[node_idx].right = right_child;
     return node_idx;
 }
 
@@ -121,8 +123,10 @@ static int buildNodeSAH(const std::vector<Circle>& circles,
                 [&](int a, int b) {
                     return (axis == 0) ? circles[a].x < circles[b].x : circles[a].y < circles[b].y;
                 });
-            node.left = buildNodeSAH(circles, indices, start, mid, nodes, fat_margin);
-            node.right = buildNodeSAH(circles, indices, mid, end, nodes, fat_margin);
+            int left_child = buildNodeSAH(circles, indices, start, mid, nodes, fat_margin);
+            int right_child = buildNodeSAH(circles, indices, mid, end, nodes, fat_margin);
+            nodes[node_idx].left = left_child;
+            nodes[node_idx].right = right_child;
         }
         return node_idx;
     }
@@ -194,15 +198,18 @@ static int buildNodeSAH(const std::vector<Circle>& circles,
             right_bounds[i] = running_bounds;
         }
 
-        for (int i = 0; i < NUM_BINS - 1; ++i) {
-            if (left_count[i] == 0 || right_count[i + 1] == 0) continue;
-            float cost = 1.0f +
-                (aabbSurfaceArea(left_bounds[i]) / aabbSurfaceArea(node.bounds)) * left_count[i] +
-                (aabbSurfaceArea(right_bounds[i + 1]) / aabbSurfaceArea(node.bounds)) * right_count[i + 1];
-            if (cost < best_cost) {
-                best_cost = cost;
-                best_axis = axis;
-                best_bin = i;
+        float parent_sa = aabbSurfaceArea(node.bounds);
+        if (parent_sa > 1e-7f) {
+            for (int i = 0; i < NUM_BINS - 1; ++i) {
+                if (left_count[i] == 0 || right_count[i + 1] == 0) continue;
+                float cost = 1.0f +
+                    (aabbSurfaceArea(left_bounds[i]) / parent_sa) * left_count[i] +
+                    (aabbSurfaceArea(right_bounds[i + 1]) / parent_sa) * right_count[i + 1];
+                if (cost < best_cost) {
+                    best_cost = cost;
+                    best_axis = axis;
+                    best_bin = i;
+                }
             }
         }
     }
@@ -226,8 +233,10 @@ static int buildNodeSAH(const std::vector<Circle>& circles,
         if (mid == start || mid == end) {
             best_bin = -1;
         } else {
-            node.left = buildNodeSAH(circles, indices, start, mid, nodes, fat_margin);
-            node.right = buildNodeSAH(circles, indices, mid, end, nodes, fat_margin);
+            int left_child = buildNodeSAH(circles, indices, start, mid, nodes, fat_margin);
+            int right_child = buildNodeSAH(circles, indices, mid, end, nodes, fat_margin);
+            nodes[node_idx].left = left_child;
+            nodes[node_idx].right = right_child;
             return node_idx;
         }
     }
@@ -241,8 +250,10 @@ static int buildNodeSAH(const std::vector<Circle>& circles,
             return (axis == 0) ? circles[a].x < circles[b].x : circles[a].y < circles[b].y;
         });
 
-    node.left = buildNodeSAH(circles, indices, start, mid, nodes, fat_margin);
-    node.right = buildNodeSAH(circles, indices, mid, end, nodes, fat_margin);
+    int left_child = buildNodeSAH(circles, indices, start, mid, nodes, fat_margin);
+    int right_child = buildNodeSAH(circles, indices, mid, end, nodes, fat_margin);
+    nodes[node_idx].left = left_child;
+    nodes[node_idx].right = right_child;
     return node_idx;
 }
 
