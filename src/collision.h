@@ -40,6 +40,12 @@ struct Pair {
 
 enum class BuildMethod { Median, SAH };
 
+struct BVHConfig {
+    static constexpr int SAH_NUM_BINS = 12;
+    static constexpr int STACK_INITIAL_CAPACITY = 256;
+    static constexpr float DEFAULT_FAT_MARGIN = 3.0f;
+};
+
 struct BVHStats {
     int nodes_used = 0;
     int pairs_tested = 0;

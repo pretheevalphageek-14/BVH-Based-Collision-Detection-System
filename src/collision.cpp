@@ -143,7 +143,7 @@ static int buildNodeSAH(const std::vector<Circle>& circles,
         cmaxy = std::max(cmaxy, c.y);
     }
 
-    constexpr int NUM_BINS = 12;
+    constexpr int NUM_BINS = BVHConfig::SAH_NUM_BINS;
     float best_cost = FLT_MAX;
     int best_axis = 0;
     int best_bin = -1;
@@ -359,7 +359,7 @@ static void queryNodeSelf(int node_idx,
                           int& pairs_tested) {
     struct StackEntry { int a, b; };
     std::vector<StackEntry> stack;
-    stack.reserve(256);
+    stack.reserve(BVHConfig::STACK_INITIAL_CAPACITY);
     stack.push_back({node_idx, node_idx});
 
     while (!stack.empty()) {

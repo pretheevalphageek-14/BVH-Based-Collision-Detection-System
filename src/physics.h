@@ -25,6 +25,8 @@ struct PhysicsConfig {
     bool gravityEnabled = false;    // Gravity toggle
     float gravity = 300.0f;         // Downward gravity acceleration (px/s^2)
     float airDrag = 0.005f;         // Viscous air resistance damping
+    float baumgarteSlop = 0.01f;     // Positional penetration allowance slop (px)
+    float baumgartePercent = 0.8f;   // Baumgarte stabilization projection factor (0.2 - 0.8)
 };
 
 struct PhysicsAudit {

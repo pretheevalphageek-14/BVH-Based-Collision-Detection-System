@@ -103,8 +103,8 @@ void resolvePhysicsCollision(Circle& a, Circle& b, const PhysicsConfig& config, 
     // Positional De-penetration (Baumgarte Linear Projection)
     // -------------------------------------------------------------------------
     float overlap = minDist - dist;
-    const float slop = 0.01f;
-    const float percent = 0.8f;
+    const float slop = config.baumgarteSlop;
+    const float percent = config.baumgartePercent;
     float correction = (std::max(overlap - slop, 0.0f) / invMassSum) * percent;
 
     a.x -= nx * correction * a.invMass;
