@@ -356,7 +356,8 @@ static void queryNodeSelf(int node_idx,
                           const std::vector<BVHNode>& nodes,
                           const std::vector<Circle>& circles,
                           std::vector<Pair>& out_pairs,
-                          int& pairs_tested) {
+                          int& pairs_tested,
+                          int& node_visits) {
     struct StackEntry { int a, b; };
     std::vector<StackEntry> stack;
     stack.reserve(BVHConfig::STACK_INITIAL_CAPACITY);
@@ -368,6 +369,7 @@ static void queryNodeSelf(int node_idx,
         int a = entry.a, b = entry.b;
 
         if (a < 0 || b < 0) continue;
+        node_visits += (a == b ? 1 : 2);
 
         const BVHNode& na = nodes[a];
         const BVHNode& nb = nodes[b];
@@ -417,6 +419,7 @@ void queryBVH(const std::vector<BVHNode>& nodes,
     auto t0 = Clock::now();
     out_pairs.clear();
     stats.pairs_tested = 0;
+    stats.node_visits = 0;
 
     if (nodes.empty()) {
         stats.query_time_us = std::chrono::duration<double, std::micro>(Clock::now() - t0).count();
@@ -424,7 +427,7 @@ void queryBVH(const std::vector<BVHNode>& nodes,
         return;
     }
 
-    queryNodeSelf(0, nodes, circles, out_pairs, stats.pairs_tested);
+    queryNodeSelf(0, nodes, circles, out_pairs, stats.pairs_tested, stats.node_visits);
     stats.collisions_found = (int)out_pairs.size();
     stats.query_time_us = std::chrono::duration<double, std::micro>(Clock::now() - t0).count();
 }

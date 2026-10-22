@@ -49,6 +49,7 @@ struct BVHConfig {
 struct BVHStats {
     int nodes_used = 0;
     int pairs_tested = 0;
+    int node_visits = 0;
     int collisions_found = 0;
     double build_time_us = 0.0;
     double query_time_us = 0.0;
