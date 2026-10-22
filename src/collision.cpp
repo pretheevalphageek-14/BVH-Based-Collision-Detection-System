@@ -404,6 +404,7 @@ void queryBVH(const std::vector<BVHNode>& nodes,
               std::vector<Pair>& out_pairs,
               BVHStats& stats) {
     auto t0 = Clock::now();
+    out_pairs.clear();
     stats.pairs_tested = 0;
 
     if (nodes.empty()) {
