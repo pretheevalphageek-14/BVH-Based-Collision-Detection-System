@@ -42,7 +42,9 @@
 #endif
 
 // ---- printf format-string checking where the compiler supports it ----------
-#if defined(__GNUC__) || defined(__clang__)
+#if defined(__MINGW32__) || defined(__MINGW64__)
+#define BVHLOG_PRINTF(fmt_idx, first_arg) __attribute__((format(gnu_printf, fmt_idx, first_arg)))
+#elif defined(__GNUC__) || defined(__clang__)
 #define BVHLOG_PRINTF(fmt_idx, first_arg) __attribute__((format(printf, fmt_idx, first_arg)))
 #else
 #define BVHLOG_PRINTF(fmt_idx, first_arg)

@@ -152,7 +152,6 @@ static void benchmark(int n, int frames, CollisionMode mode) {
     std::vector<Circle> circles;
     spawnCircles(circles, n, 0);
 
-    using Clock = std::chrono::high_resolution_clock;
     double build_sum = 0.0, query_sum = 0.0;
     long pairs_sum = 0;
     const char* names[] = { "Median Split", "SAH Split", "Refit (Fat)" };
@@ -168,7 +167,6 @@ static void benchmark(int n, int frames, CollisionMode mode) {
     for (int f = 0; f < frames; ++f) {
         stepPhysics(circles);
 
-        auto t0 = Clock::now();
         if (mode == MODE_MEDIAN) {
             buildBVH(circles, nodes, indices, st, BuildMethod::Median, 0.0f);
             build_sum += st.build_time_us;

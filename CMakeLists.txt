@@ -21,4 +21,22 @@ add_executable(bvh_physics
 
 target_link_libraries(bvh_physics PRIVATE SDL3::SDL3)
 
-target_include_directories(bvh_physics PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_include_directories(bvh_physics PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/src)
+
+enable_testing()
+
+add_executable(test_physics
+    tests/test_physics.cpp
+    src/collision.cpp
+    src/physics.cpp
+)
+target_include_directories(test_physics PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/src)
+add_test(NAME test_physics COMMAND test_physics)
+
+add_executable(test_correctness
+    tests/test_correctness.cpp
+    src/collision.cpp
+    src/physics.cpp
+)
+target_include_directories(test_correctness PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/src)
+add_test(NAME test_correctness COMMAND test_correctness)
