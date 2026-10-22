@@ -50,8 +50,6 @@ int main() {
 
     // 1. Build profiling
     const int BUILD_RUNS = 20;
-    double t_bounds_accum = 0.0;
-    double t_nth_accum = 0.0;
     double t_build_total = 0.0;
 
     auto t0 = Clock::now();

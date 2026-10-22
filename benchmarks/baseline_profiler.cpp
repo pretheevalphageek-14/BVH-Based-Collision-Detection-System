@@ -53,7 +53,7 @@ void* operator new(size_t size) {
     return reinterpret_cast<char*>(p) + 16;
 }
 
-void operator delete(void* ptr) noexcept {
+static void deallocate_tracked(void* ptr) noexcept {
     if (!ptr) return;
     void* orig = reinterpret_cast<char*>(ptr) - 16;
     size_t size = *(reinterpret_cast<size_t*>(orig));
@@ -66,8 +66,12 @@ void operator delete(void* ptr) noexcept {
     std::free(orig);
 }
 
+void operator delete(void* ptr) noexcept {
+    deallocate_tracked(ptr);
+}
+
 void operator delete(void* ptr, size_t) noexcept {
-    operator delete(ptr);
+    deallocate_tracked(ptr);
 }
 
 void* operator new[](size_t size) {
@@ -75,11 +79,11 @@ void* operator new[](size_t size) {
 }
 
 void operator delete[](void* ptr) noexcept {
-    operator delete(ptr);
+    deallocate_tracked(ptr);
 }
 
 void operator delete[](void* ptr, size_t) noexcept {
-    operator delete(ptr);
+    deallocate_tracked(ptr);
 }
 
 // =============================================================================
