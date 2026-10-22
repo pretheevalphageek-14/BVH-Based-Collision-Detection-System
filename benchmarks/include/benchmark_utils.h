@@ -131,7 +131,26 @@ inline size_t calculateBVHMemory(const std::vector<BVHNode>& nodes, const std::v
 }
 
 /**
- * @brief Computes summary statistics (mean, median, standard deviation, min, max) for numeric vectors.
+ * @brief Computes total Surface Area Heuristic (SAH) quality cost of the BVH tree.
+ * SAH(T) = sum_{interior}(SA(node)/SA(root) * C_trav) + sum_{leaf}(SA(leaf)/SA(root) * C_isect * count)
+ * with C_trav = 1.0, C_isect = 1.0.
+ */
+inline double calculateSAHCost(const std::vector<BVHNode>& nodes) {
+    if (nodes.empty()) return 0.0;
+    float root_sa = aabbSurfaceArea(nodes[0].bounds);
+    if (root_sa <= 1e-7f) return 0.0;
+
+    double total_cost = 0.0;
+    for (const auto& node : nodes) {
+        float sa = aabbSurfaceArea(node.bounds);
+        float rel_sa = sa / root_sa;
+        total_cost += static_cast<double>(rel_sa * 1.0f);
+    }
+    return total_cost;
+}
+
+/**
+ * @brief Computes summary statistics (mean, median, standard deviation, min, max, p95) for numeric vectors.
  */
 inline MetricSummary computeSummary(std::vector<double> values) {
     MetricSummary s{};
@@ -150,6 +169,10 @@ inline MetricSummary computeSummary(std::vector<double> values) {
     } else {
         s.median = values[mid];
     }
+
+    size_t p95_idx = static_cast<size_t>(std::ceil(0.95 * values.size())) - 1;
+    if (p95_idx >= values.size()) p95_idx = values.size() - 1;
+    s.p95 = values[p95_idx];
 
     double variance = 0.0;
     for (double v : values) {

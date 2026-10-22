@@ -1,7 +1,8 @@
-# PowerShell script to compile and execute the BVH Benchmark Harness
 [CmdletBinding()]
 param (
     [switch]$Quick,
+    [switch]$Full,
+    [int]$Runs = 0,
     [string]$OutputDir = "benchmarks/results"
 )
 
@@ -48,6 +49,11 @@ Write-Host "Starting benchmark execution...`n" -ForegroundColor Cyan
 $runArgs = @("--output", $OutputDir)
 if ($Quick) {
     $runArgs += "--quick"
+} elseif ($Full) {
+    $runArgs += "--full"
+}
+if ($Runs -gt 0) {
+    $runArgs += @("--runs", $Runs)
 }
 
 & $outExe $runArgs
