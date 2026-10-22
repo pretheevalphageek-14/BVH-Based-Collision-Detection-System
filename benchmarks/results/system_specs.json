@@ -1,8 +1,8 @@
 {
   "os": "Windows (x86_64)",
-  "compiler": "GCC 14.2.0",
+  "compiler": "GCC 16.2.0",
   "cpp_standard": "C++20",
-  "logical_cores": 24,
+  "logical_cores": 28,
   "timer_resolution": "high_resolution_clock (nanosecond)",
-  "timestamp": "Oct 22 2026 16:16:19"
+  "timestamp": "Oct 22 2026 23:29:36"
 }
