@@ -13,19 +13,26 @@ void resolvePhysicsCollision(Circle& a, Circle& b, const PhysicsConfig& config, 
     float minDist = a.r + b.r;
 
     // Narrow-phase circle-circle intersection check
-    if (dist2 >= minDist * minDist || dist2 <= 1e-8f) return;
+    if (dist2 >= minDist * minDist) return;
 
-    float dist = std::sqrt(dist2);
-    float nx = dx / dist; // Unit normal pointing from a to b
-    float ny = dy / dist;
+    float dist = 0.0f;
+    float nx = 1.0f;
+    float ny = 0.0f;
+    if (dist2 > 1e-8f) {
+        dist = std::sqrt(dist2);
+        nx = dx / dist; // Unit normal pointing from a to b
+        ny = dy / dist;
+    } else {
+        // Degenerate case: concentric bodies (dist = 0). Use deterministic unit normal.
+        dist = 0.0f;
+        nx = 1.0f;
+        ny = 0.0f;
+    }
 
     // Relative velocity: v_rel = v_b - v_a
     float rvx = b.vx - a.vx;
     float rvy = b.vy - a.vy;
     float velAlongNormal = rvx * nx + rvy * ny;
-
-    // If bodies are already separating, do not apply impulse
-    if (velAlongNormal > 0.0f) return;
 
     float invMassSum = a.invMass + b.invMass;
     if (invMassSum <= 1e-7f) return;
@@ -37,22 +44,25 @@ void resolvePhysicsCollision(Circle& a, Circle& b, const PhysicsConfig& config, 
     // FEATURE 1: Normal Impulse with Newtonian Restitution e in [0, 1]
     // J_n = - (1 + e) * (v_rel · n) / (1/m_a + 1/m_b)
     // -------------------------------------------------------------------------
-    float e = config.restitution;
-    float jNormal = -(1.0f + e) * velAlongNormal / invMassSum;
+    float jNormal = 0.0f;
+    if (velAlongNormal < 0.0f) {
+        float e = config.restitution;
+        jNormal = -(1.0f + e) * velAlongNormal / invMassSum;
 
-    a.vx -= (jNormal * a.invMass) * nx;
-    a.vy -= (jNormal * a.invMass) * ny;
-    b.vx += (jNormal * b.invMass) * nx;
-    b.vy += (jNormal * b.invMass) * ny;
+        a.vx -= (jNormal * a.invMass) * nx;
+        a.vy -= (jNormal * a.invMass) * ny;
+        b.vx += (jNormal * b.invMass) * nx;
+        b.vy += (jNormal * b.invMass) * ny;
 
-    // Visual collision highlight ring for rendering
-    a.flash_timer = 2;
-    b.flash_timer = 2;
+        // Visual collision highlight ring for rendering
+        a.flash_timer = 2;
+        b.flash_timer = 2;
+    }
 
     // -------------------------------------------------------------------------
     // FEATURE 2: Coulomb Friction (Tangential Impulse Clamping)
     // -------------------------------------------------------------------------
-    if (config.frictionEnabled) {
+    if (config.frictionEnabled && jNormal > 0.0f) {
         float nrvx = b.vx - a.vx;
         float nrvy = b.vy - a.vy;
         float nvn = nrvx * nx + nrvy * ny;
@@ -71,13 +81,15 @@ void resolvePhysicsCollision(Circle& a, Circle& b, const PhysicsConfig& config, 
             float muDynamic = std::sqrt(a.dynamicFriction * b.dynamicFriction);
 
             // Coulomb's Law of Friction Clamping:
-            // |J_t| <= mu_s * J_n  --> Static friction (no slip)
-            // |J_t| >  mu_s * J_n  --> Dynamic friction (kinetic slip)
+            // Dynamic friction magnitude is clamped to jNormal * muDynamic, but never
+            // exceeds |jTangential| to prevent tangential velocity inversion / energy gain.
             float frictionImpulse = 0.0f;
             if (std::abs(jTangential) <= jNormal * muStatic) {
                 frictionImpulse = jTangential;
             } else {
-                frictionImpulse = -jNormal * muDynamic;
+                float maxDynamic = jNormal * muDynamic;
+                float clampedMag = std::min(std::abs(jTangential), maxDynamic);
+                frictionImpulse = (jTangential < 0.0f) ? -clampedMag : clampedMag;
             }
 
             a.vx -= (frictionImpulse * a.invMass) * tx;
