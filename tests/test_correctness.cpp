@@ -5,6 +5,7 @@
 #include <vector>
 #include <algorithm>
 #include <string>
+#include <random>
 #include <cassert>
 #include <cmath>
 #include <iomanip>
@@ -155,6 +156,58 @@ int main() {
         testCases.push_back({ "grid_touching_neighbors", c });
     }
 
+    // 8. Objects Moving Fast (High Velocity Kinematics & Refit / Margin Breach)
+    {
+        std::vector<Circle> c;
+        // Two fast head-on colliding circles
+        Circle c0 = makeC(100.0f, 200.0f, 10.0f); c0.vx = 800.0f; c0.vy = 0.0f;
+        Circle c1 = makeC(300.0f, 200.0f, 10.0f); c1.vx = -800.0f; c1.vy = 0.0f;
+        // Two high-speed diagonal cruisers
+        Circle c2 = makeC(50.0f, 50.0f, 8.0f); c2.vx = 600.0f; c2.vy = 600.0f;
+        Circle c3 = makeC(500.0f, 500.0f, 8.0f); c3.vx = -600.0f; c3.vy = -600.0f;
+        // Near-touching fast objects
+        Circle c4 = makeC(200.0f, 100.0f, 12.0f); c4.vx = 1000.0f; c4.vy = 0.0f;
+        Circle c5 = makeC(224.0f, 100.0f, 12.0f); c5.vx = -1000.0f; c5.vy = 0.0f;
+        c.push_back(c0); c.push_back(c1); c.push_back(c2);
+        c.push_back(c3); c.push_back(c4); c.push_back(c5);
+        testCases.push_back({ "fast_moving_objects", c });
+    }
+
+    // 9. Large Scale Scene (N = 1000 Uniform)
+    {
+        std::vector<Circle> c;
+        c.reserve(1000);
+        std::mt19937 rng(1337);
+        std::uniform_real_distribution<float> px(20.0f, 1260.0f);
+        std::uniform_real_distribution<float> py(20.0f, 700.0f);
+        std::uniform_real_distribution<float> pr(5.0f, 15.0f);
+        for (int i = 0; i < 1000; ++i) {
+            c.push_back(makeC(px(rng), py(rng), pr(rng)));
+        }
+        testCases.push_back({ "large_scale_scene_1000", c });
+    }
+
+    // 10. Large Scale Clustered Scene (N = 2500 Clustered)
+    {
+        std::vector<Circle> c;
+        c.reserve(2500);
+        std::mt19937 rng(777);
+        const float clusterCenters[4][2] = {
+            { 300.0f, 200.0f }, { 900.0f, 200.0f },
+            { 300.0f, 500.0f }, { 900.0f, 500.0f }
+        };
+        std::normal_distribution<float> offset(0.0f, 40.0f);
+        std::uniform_real_distribution<float> pr(4.0f, 12.0f);
+        std::uniform_int_distribution<int> pickCenter(0, 3);
+        for (int i = 0; i < 2500; ++i) {
+            int idx = pickCenter(rng);
+            float x = clusterCenters[idx][0] + offset(rng);
+            float y = clusterCenters[idx][1] + offset(rng);
+            c.push_back(makeC(x, y, pr(rng)));
+        }
+        testCases.push_back({ "large_scale_clustered_2500", c });
+    }
+
     std::ofstream baselineOut("tests/baseline_test_pairs.txt");
     bool all_passed = true;
 
@@ -238,8 +291,81 @@ int main() {
             }
         }
     }
-
     baselineOut.close();
+
+    // 11. Vector Reuse Test: Calling queryBVH repeatedly with the same output vector
+    std::cout << "\n------------------------------------------------------------\n";
+    std::cout << " RUNNING TEST: Output Vector Reuse & Auto-Clear Check\n";
+    std::cout << "------------------------------------------------------------\n";
+    {
+        std::vector<Circle> sampleScene = {
+            makeC(10.0f, 10.0f, 5.0f),
+            makeC(12.0f, 10.0f, 5.0f),
+            makeC(100.0f, 100.0f, 5.0f)
+        };
+        std::vector<BVHNode> nodes;
+        std::vector<int> indices;
+        BVHStats stats;
+        std::vector<Pair> reusedPairs;
+
+        buildBVH(sampleScene, nodes, indices, stats, BuildMethod::Median, 0.0f);
+        queryBVH(nodes, sampleScene, reusedPairs, stats);
+        size_t initialCount = reusedPairs.size();
+
+        // Call queryBVH again WITHOUT manual clearing
+        queryBVH(nodes, sampleScene, reusedPairs, stats);
+        if (reusedPairs.size() != initialCount) {
+            std::cout << " [FAIL] Vector Reuse: queryBVH accumulated pairs ("
+                      << reusedPairs.size() << " instead of " << initialCount << ")!\n";
+            all_passed = false;
+        } else {
+            std::cout << " [PASS] Vector Reuse: queryBVH safely clears output container (Count = "
+                      << reusedPairs.size() << ")\n";
+        }
+    }
+
+    // 12. Dynamic Kinematics Multi-Frame Simulation Check
+    std::cout << "\n------------------------------------------------------------\n";
+    std::cout << " RUNNING TEST: Dynamic Kinematics Multi-Frame Invariant Check\n";
+    std::cout << "------------------------------------------------------------\n";
+    {
+        std::vector<Circle> dynScene;
+        dynScene.push_back(makeC(100.0f, 200.0f, 15.0f)); dynScene.back().vx = 250.0f;
+        dynScene.push_back(makeC(400.0f, 200.0f, 15.0f)); dynScene.back().vx = -250.0f;
+        dynScene.push_back(makeC(250.0f, 100.0f, 12.0f)); dynScene.back().vy = 300.0f;
+        dynScene.push_back(makeC(250.0f, 400.0f, 12.0f)); dynScene.back().vy = -300.0f;
+
+        PhysicsConfig pCfg;
+        std::vector<BVHNode> nodes;
+        std::vector<int> indices;
+        BVHStats stats;
+
+        // Simulate 20 frames; every frame, BVH output must match brute force exactly
+        bool dynamicMatchesAllFrames = true;
+        for (int frame = 0; frame < 20; ++frame) {
+            updatePhysicsKinematics(dynScene, 1.0f / 60.0f, 1280.0f, 720.0f, pCfg);
+
+            // Rebuild BVH and compare with Brute Force
+            buildBVH(dynScene, nodes, indices, stats, BuildMethod::Median, 0.0f);
+            std::vector<Pair> bvhPairs;
+            queryBVH(nodes, dynScene, bvhPairs, stats);
+            normalizePairs(bvhPairs);
+
+            std::vector<Pair> brutePairs = bruteForcePairs(dynScene);
+            normalizePairs(brutePairs);
+
+            std::string err;
+            if (!comparePairs(bvhPairs, brutePairs, err)) {
+                std::cout << " [FAIL] Frame " << frame << " mismatch: " << err << "\n";
+                dynamicMatchesAllFrames = false;
+                all_passed = false;
+                break;
+            }
+        }
+        if (dynamicMatchesAllFrames) {
+            std::cout << " [PASS] Dynamic Kinematics: BVH exactly matched brute force across all 20 frames\n";
+        }
+    }
     std::cout << "\n===================================================================\n";
     if (all_passed) {
         std::cout << " ALL CORRECTNESS TESTS PASSED SUCCESSFULLY!                        \n";

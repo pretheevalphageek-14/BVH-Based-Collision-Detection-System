@@ -99,6 +99,46 @@ void testCoulombFriction() {
     reportTest("Coulomb Friction Tangential Deceleration", relTangentialWithFriction < relTangentialNoFriction);
 }
 
+// TEST 4: Identical Positions (Center-on-center overlap resolution)
+void testIdenticalPositions() {
+    std::cout << "\n--- TEST 4: Identical Positions Overlap Resolution ---\n";
+    PhysicsConfig cfg;
+    PhysicsAudit audit;
+
+    Circle a{}; a.x = 100.0f; a.y = 100.0f; a.vx = 0.0f; a.vy = 0.0f; a.r = 10.0f; a.mass = 2.0f; a.invMass = 0.5f;
+    Circle b{}; b.x = 100.0f; b.y = 100.0f; b.vx = 0.0f; b.vy = 0.0f; b.r = 10.0f; b.mass = 2.0f; b.invMass = 0.5f;
+
+    resolvePhysicsCollision(a, b, cfg, audit);
+
+    float dx = b.x - a.x;
+    float dy = b.y - a.y;
+    float dist = std::sqrt(dx * dx + dy * dy);
+
+    std::cout << "   Separation Distance after resolution: " << dist << " px (minDist=" << (a.r + b.r) << ")\n";
+    reportTest("Identical Position De-penetration Separation", dist > 0.0f);
+}
+
+// TEST 5: Coulomb Friction Energy Bound (No Energy Gain)
+void testFrictionEnergyBound() {
+    std::cout << "\n--- TEST 5: Friction Energy Bound Check ---\n";
+    PhysicsConfig cfg;
+    cfg.restitution = 0.8f;
+    cfg.frictionEnabled = true;
+    PhysicsAudit audit;
+
+    Circle a{}; a.x = 50.0f; a.y = 50.0f; a.vx = 100.0f; a.vy = 5.0f; a.r = 5.0f; a.mass = 1.0f; a.invMass = 1.0f;
+    a.staticFriction = 0.8f; a.dynamicFriction = 0.6f;
+    Circle b{}; b.x = 58.0f; b.y = 50.0f; b.vx = -100.0f; b.vy = -5.0f; b.r = 5.0f; b.mass = 1.0f; b.invMass = 1.0f;
+    b.staticFriction = 0.8f; b.dynamicFriction = 0.6f;
+
+    double keBefore = 0.5 * (a.mass * (a.vx * a.vx + a.vy * a.vy) + b.mass * (b.vx * b.vx + b.vy * b.vy));
+    resolvePhysicsCollision(a, b, cfg, audit);
+    double keAfter = 0.5 * (a.mass * (a.vx * a.vx + a.vy * a.vy) + b.mass * (b.vx * b.vx + b.vy * b.vy));
+
+    std::cout << "   KE Initial: " << keBefore << " J | KE Final: " << keAfter << " J\n";
+    reportTest("No Energy Gain During Friction Contact", keAfter <= keBefore + 1e-5);
+}
+
 int main() {
     std::cout << "====================================================================\n";
     std::cout << "  TEAM REPO PHYSICS VERIFICATION SUITE (DSA LAB EVALUATION 3)       \n";
@@ -107,6 +147,8 @@ int main() {
     testElastic();
     testInelastic();
     testCoulombFriction();
+    testIdenticalPositions();
+    testFrictionEnergyBound();
 
     std::cout << "\n====================================================================\n";
     std::cout << "  ALL ADVANCED PHYSICS CHECKS PASSED SUCCESSFULLY!                  \n";
