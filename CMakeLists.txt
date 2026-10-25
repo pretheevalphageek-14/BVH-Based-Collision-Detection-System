@@ -4,6 +4,7 @@ project(bvh_physics LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 if(MSVC)
     add_compile_options(/W4 /permissive- /utf-8)
@@ -21,4 +22,32 @@ add_executable(bvh_physics
 
 target_link_libraries(bvh_physics PRIVATE SDL3::SDL3)
 
-target_include_directories(bvh_physics PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_include_directories(bvh_physics PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+# Standalone physics verification suite (headless)
+add_executable(test_physics
+    tests/test_physics.cpp
+    src/collision.cpp
+    src/physics.cpp
+)
+
+target_include_directories(test_physics PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+# Standalone benchmark runner (headless)
+add_executable(benchmark_runner
+    benchmarks/src/benchmark_runner.cpp
+    src/collision.cpp
+    src/physics.cpp
+)
+
+target_include_directories(benchmark_runner PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/benchmarks/include
+)

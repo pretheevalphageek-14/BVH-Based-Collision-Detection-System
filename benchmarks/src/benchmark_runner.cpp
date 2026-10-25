@@ -13,10 +13,6 @@
 #include <filesystem>
 #include <thread>
 
-#ifdef _WIN32
-#include <windows.h>
-#endif
-
 using Clock = std::chrono::high_resolution_clock;
 namespace fs = std::filesystem;
 
@@ -28,8 +24,25 @@ static void writeSystemSpecs(const std::string& out_dir) {
     if (!f.is_open()) return;
 
     unsigned int cores = std::thread::hardware_concurrency();
+#if defined(_WIN32)
     std::string os_name = "Windows (x86_64)";
+#elif defined(__linux__)
+    std::string os_name = "Linux";
+#elif defined(__APPLE__)
+    std::string os_name = "macOS";
+#else
+    std::string os_name = "Unknown OS";
+#endif
+
+#if defined(_MSC_VER)
+    std::string compiler = "MSVC " + std::to_string(_MSC_VER);
+#elif defined(__clang__)
+    std::string compiler = "Clang " + std::string(__clang_version__);
+#elif defined(__GNUC__)
     std::string compiler = "GCC " + std::string(__VERSION__);
+#else
+    std::string compiler = "Unknown C++ Compiler";
+#endif
 
     f << "{\n";
     f << "  \"os\": \"" << os_name << "\",\n";
@@ -267,14 +280,14 @@ int main(int argc, char** argv) {
                     query_times.push_back(q_time);
                     total_times.push_back(total_t);
 
-                    pairs_tested_vec.push_back(st.pairs_tested);
-                    narrow_pairs_vec.push_back(bvh_pairs.size());
+                    pairs_tested_vec.push_back(static_cast<double>(st.pairs_tested));
+                    narrow_pairs_vec.push_back(static_cast<double>(bvh_pairs.size()));
 
                     int hits = BenchmarkUtils::countNarrowPhaseHits(scene, bvh_pairs);
                     hits_vec.push_back(hits);
 
                     double max_possible_pairs = (static_cast<double>(n) * (n - 1)) * 0.5;
-                    double culling_eff = 100.0 * (1.0 - (static_cast<double>(st.pairs_tested) / std::max(1.0, max_possible_pairs)));
+                    double culling_eff = 100.0 * (1.0 - (static_cast<double>(st.pairs_tested) / (std::max)(1.0, max_possible_pairs)));
                     culling_eff_vec.push_back(culling_eff);
 
                     final_tree_depth = BenchmarkUtils::calculateTreeDepth(nodes);
