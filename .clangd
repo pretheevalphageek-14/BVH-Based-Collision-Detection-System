@@ -1,9 +1,27 @@
 CompileFlags:
+  Compiler: C:/msys64/ucrt64/bin/g++.exe
   Add:
+    - --target=x86_64-w64-windows-gnu
     - -std=c++20
+    - -isystem
+    - C:/msys64/ucrt64/include/c++/16.2.0
+    - -isystem
+    - C:/msys64/ucrt64/include/c++/16.2.0/x86_64-w64-mingw32
+    - -isystem
+    - C:/msys64/ucrt64/include/c++/16.2.0/backward
+    - -isystem
+    - C:/msys64/ucrt64/lib/gcc/x86_64-w64-mingw32/16.2.0/include
+    - -isystem
+    - C:/msys64/ucrt64/include
+    - -IX:/AMRITA/DSA/Eval/BVH-Based-Collision-Detection-System/src
+    - -IX:/AMRITA/DSA/Eval/BVH-Based-Collision-Detection-System/include
+    - -IX:/AMRITA/DSA/Eval/BVH-Based-Collision-Detection-System/benchmarks/include
     - -Isrc
     - -Iinclude
     - -Ibenchmarks/include
-    - -Ibuild/vcpkg_installed/x64-windows/include
     - -Wno-unknown-pragmas
     - -Wno-unused-command-line-argument
+
+Diagnostics:
+  Suppress:
+    - builtin_definition

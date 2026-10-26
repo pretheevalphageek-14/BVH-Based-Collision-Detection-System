@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BVH Dynamics Pro — Spatial Partitioning & Contact Physics Visualizer</title>
+  <meta name="description" content="Industrial-grade interactive Bounding Volume Hierarchy (BVH) spatial partitioning and impulse contact physics engine demonstration with real-time empirical telemetry and benchmark analytics.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Top Application Glass Header -->
+  <header class="app-header">
+    <div class="brand-section">
+      <div class="brand-logo">🔷</div>
+      <div>
+        <h1 class="brand-title">BVH DYNAMICS PRO</h1>
+        <p class="brand-subtitle">Spatial Partitioning & Contact Physics Engine</p>
+      </div>
+    </div>
+
+    <!-- Main Navigation Tabs -->
+    <nav class="nav-tabs" aria-label="Main Navigation">
+      <button class="nav-tab active" data-tab="tab-simulator" id="tab-btn-sim">
+        <span>🎮</span> Live BVH Simulator
+      </button>
+      <button class="nav-tab" data-tab="tab-analytics" id="tab-btn-analytics">
+        <span>📊</span> Benchmark Analytics
+      </button>
+      <button class="nav-tab" data-tab="tab-architecture" id="tab-btn-arch">
+        <span>📐</span> DSA Architecture & Guide
+      </button>
+    </nav>
+
+    <!-- Header Status Badges -->
+    <div class="header-meta">
+      <span class="badge">
+        <span class="badge-pulse"></span>
+        C++20 & SDL3 CORE
+      </span>
+      <span class="badge" style="border-color: rgba(168, 85, 247, 0.4); color: var(--purple-accent);">
+        O(N log N) BROAD PHASE
+      </span>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="main-wrapper">
+
+    <!-- ========================================== -->
+    <!-- TAB 1: INTERACTIVE BVH SIMULATOR -->
+    <!-- ========================================== -->
+    <section class="tab-content active" id="tab-simulator">
+      <div class="simulator-layout">
+
+        <!-- Left Simulation Controls Dock -->
+        <aside class="glass-panel" id="controls-panel">
+          <div class="panel-header">
+            <span class="panel-title">⚙ Simulation Controls</span>
+          </div>
+
+          <!-- Partitioning Strategy -->
+          <div class="control-group">
+            <label class="control-label">Partitioning Strategy</label>
+            <div class="btn-stack">
+              <button class="btn-card active" data-mode="median" id="btn-mode-median">
+                <span class="btn-card-title">1. BVH-Median</span>
+                <span class="btn-card-desc">O(N log N) Centroid Midpoint Split</span>
+              </button>
+              <button class="btn-card" data-mode="sah" id="btn-mode-sah">
+                <span class="btn-card-title">2. BVH-SAH</span>
+                <span class="btn-card-desc">12-Bin Surface Area Heuristic</span>
+              </button>
+              <button class="btn-card" data-mode="refit" id="btn-mode-refit">
+                <span class="btn-card-title">3. Fat AABB Refit</span>
+                <span class="btn-card-desc">Bottom-Up O(N) Lazy Refit (+3px)</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Physics Restitution -->
+          <div class="control-group">
+            <label class="control-label">Contact Restitution (e)</label>
+            <div class="btn-stack">
+              <button class="btn-card active" data-restitution="1.0" id="btn-restit-elastic">
+                <span class="btn-card-title">Elastic (e = 1.0)</span>
+                <span class="btn-card-desc">Kinetic energy strictly conserved</span>
+              </button>
+              <button class="btn-card" data-restitution="0.75" id="btn-restit-partial">
+                <span class="btn-card-title">Partial Elastic (e = 0.75)</span>
+                <span class="btn-card-desc">Realistic momentum exchange</span>
+              </button>
+              <button class="btn-card" data-restitution="0.0" id="btn-restit-inelastic">
+                <span class="btn-card-title">Inelastic (e = 0.0)</span>
+                <span class="btn-card-desc">Maximal plastic dissipation</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Environment Toggles -->
+          <div class="control-group">
+            <label class="control-label">Environment Dynamics</label>
+            <div class="btn-grid">
+              <button class="btn-action active" id="btn-toggle-friction">
+                <span>⚡</span> Friction: ON
+              </button>
+              <button class="btn-action" id="btn-toggle-gravity">
+                <span>🌍</span> Gravity: OFF
+              </button>
+            </div>
+          </div>
+
+          <!-- Visual Overlays -->
+          <div class="control-group">
+            <label class="control-label">Visual Debug Layers</label>
+            <div class="btn-grid">
+              <button class="btn-action active" id="btn-toggle-tree">
+                <span>🔲</span> BVH AABBs
+              </button>
+              <button class="btn-action" id="btn-toggle-velocity">
+                <span>↗</span> Velocities
+              </button>
+            </div>
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 0.5rem; background: rgba(18, 28, 50, 0.7); padding: 4px 8px; border-radius: var(--radius-sm); border: 1px solid rgba(56, 189, 248, 0.15);">
+              <span style="font-size: 0.75rem; color: var(--text-muted);">Tree Depth</span>
+              <div style="display: flex; gap: 4px; align-items: center;">
+                <button class="btn-action" style="padding: 2px 8px;" id="btn-depth-dec">-</button>
+                <span id="metric-depth" style="font-family: var(--font-mono); font-size: 0.8rem; min-width: 20px; text-align: center;">5</span>
+                <button class="btn-action" style="padding: 2px 8px;" id="btn-depth-inc">+</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="control-group" style="margin-bottom: 0;">
+            <label class="control-label">Scene Management</label>
+            <div class="btn-grid">
+              <button class="btn-action" id="btn-pause">⏸ PAUSE</button>
+              <button class="btn-action" id="btn-step">⏭ STEP</button>
+              <button class="btn-action" id="btn-reset">🔄 RESET 350</button>
+              <button class="btn-action" id="btn-clear">🗑 CLEAR</button>
+              <button class="btn-action" id="btn-add-50">+50 BODIES</button>
+              <button class="btn-action" id="btn-sub-50">-50 BODIES</button>
+            </div>
+          </div>
+        </aside>
+
+        <!-- Center Interactive Viewport -->
+        <div class="canvas-container">
+          <div class="canvas-overlay-bar">
+            <div class="canvas-pill">
+              <span style="color: var(--cyan-primary);">MODE:</span>
+              <span id="overlay-mode">MEDIAN-SPLIT</span>
+            </div>
+            <div class="canvas-pill">
+              <span style="color: var(--emerald-accent);">HEALTH:</span>
+              <span id="metric-fps">60 FPS</span>
+            </div>
+          </div>
+
+          <canvas id="bvh-canvas"></canvas>
+
+          <div class="canvas-controls-hint">
+            <span>🖱 <strong>Left-Click:</strong> Spawn rigid body sphere</span>
+            <span>🧲 <strong>Right-Click Drag:</strong> Gravitational tractor beam</span>
+            <span>⚡ <strong>60 FPS Symplectic Euler + Baumgarte De-penetration</strong></span>
+          </div>
+        </div>
+
+        <!-- Right Real-Time Telemetry Dashboard -->
+        <aside class="glass-panel" id="telemetry-panel">
+          <div class="panel-header">
+            <span class="panel-title">📈 Real-Time Telemetry</span>
+            <span class="badge" style="font-size: 0.65rem;">LIVE AUDIT</span>
+          </div>
+
+          <!-- Hierarchical Culling Efficiency -->
+          <div class="efficiency-widget">
+            <div style="display: flex; justify-content: space-between; align-items: baseline;">
+              <span style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">Subtree Culling Efficiency</span>
+              <span class="metric-val emerald" id="metric-cull-pct">99.4%</span>
+            </div>
+            <div class="bar-track">
+              <div class="bar-fill" id="cull-bar-fill"></div>
+            </div>
+          </div>
+
+          <!-- Key Metrics Rows -->
+          <div class="metric-row">
+            <span class="metric-key">Simulated Bodies (N)</span>
+            <span class="metric-val cyan" id="metric-bodies">350</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-key">Broad-Phase Tested Pairs</span>
+            <span class="metric-val" id="metric-pairs-tested">1,240</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-key">Naive Unculled Pairs (O(N²))</span>
+            <span class="metric-val" id="metric-pairs-possible">61,075</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-key">Active Collisions This Frame</span>
+            <span class="metric-val rose" id="metric-hits">8</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-key">Tree Build / Refit Latency</span>
+            <span class="metric-val" id="metric-build">38.2 µs</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-key">Dual-Tree Query Latency</span>
+            <span class="metric-val" id="metric-query">16.4 µs</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-key">Contiguous BVH Nodes</span>
+            <span class="metric-val" id="metric-nodes">699</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-key">Total Kinetic Energy</span>
+            <span class="metric-val amber" id="metric-ke">12,450 J</span>
+          </div>
+
+          <!-- Live Micro Performance Chart -->
+          <div style="margin-top: 1rem;">
+            <span class="control-label">CPU Broad-Phase Latency (60F Rolling)</span>
+            <canvas id="telemetry-sparkline"></canvas>
+          </div>
+        </aside>
+
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 2: BENCHMARK ANALYTICS & FIGURES -->
+    <!-- ========================================== -->
+    <section class="tab-content" id="tab-analytics">
+      <div class="glass-panel" style="margin-bottom: 1.5rem;">
+        <div class="panel-header">
+          <span class="panel-title">⚡ Empirical Benchmark Performance Summary</span>
+          <span class="badge">Windows x86_64 / C++20 Release</span>
+        </div>
+        <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.6;">
+          Physical measurements collected over 15 statistical repetitions across 6 scene scales ($N = 100$ to $50,000$) and 5 spatial topologies using high-resolution nanosecond timers. All BVH candidate pairs are continuously verified against an exact $O(N^2)$ ground-truth oracle.
+        </p>
+
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Object Count (N)</th>
+                <th>Partitioning Method</th>
+                <th>Build / Refit Time</th>
+                <th>Broad-Phase Query</th>
+                <th>Pairs Tested</th>
+                <th>Naive Pairs (O(N²))</th>
+                <th>Culling Efficiency</th>
+                <th>Speedup vs BF</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>100</td>
+                <td><span class="metric-val cyan">BVH-Median</span></td>
+                <td>2.84 µs</td>
+                <td>1.10 µs</td>
+                <td>264</td>
+                <td>4,950</td>
+                <td><strong style="color: var(--emerald-accent);">94.67%</strong></td>
+                <td><strong>3.8x</strong></td>
+              </tr>
+              <tr>
+                <td>500</td>
+                <td><span class="metric-val cyan">BVH-Median</span></td>
+                <td>46.03 µs</td>
+                <td>20.54 µs</td>
+                <td>1,922</td>
+                <td>124,750</td>
+                <td><strong style="color: var(--emerald-accent);">98.46%</strong></td>
+                <td><strong>9.6x</strong></td>
+              </tr>
+              <tr>
+                <td>1,000</td>
+                <td><span class="metric-val cyan">BVH-Median</span></td>
+                <td>124.87 µs</td>
+                <td>67.63 µs</td>
+                <td>5,154</td>
+                <td>499,500</td>
+                <td><strong style="color: var(--emerald-accent);">98.97%</strong></td>
+                <td><strong>13.2x</strong></td>
+              </tr>
+              <tr>
+                <td>5,000</td>
+                <td><span class="metric-val cyan">BVH-Median</span></td>
+                <td>794.63 µs</td>
+                <td>846.83 µs</td>
+                <td>72,708</td>
+                <td>12,497,500</td>
+                <td><strong style="color: var(--emerald-accent);">99.42%</strong></td>
+                <td><strong>32.7x</strong></td>
+              </tr>
+              <tr style="background: rgba(0, 229, 255, 0.05);">
+                <td><strong>10,000</strong></td>
+                <td><span class="metric-val cyan">BVH-Median</span></td>
+                <td>2,600.85 µs</td>
+                <td>3,439.83 µs</td>
+                <td>249,127</td>
+                <td>49,995,000</td>
+                <td><strong style="color: var(--emerald-accent);">99.50%</strong></td>
+                <td><strong style="color: var(--cyan-primary);">45.9x FASTER</strong></td>
+              </tr>
+              <tr style="background: rgba(16, 185, 129, 0.05);">
+                <td><strong>10,000</strong></td>
+                <td><span class="metric-val emerald">Fat AABB Refit</span></td>
+                <td><strong>91.82 µs</strong></td>
+                <td>6,494.62 µs</td>
+                <td>367,996</td>
+                <td>49,995,000</td>
+                <td><strong style="color: var(--emerald-accent);">99.26%</strong></td>
+                <td><strong style="color: var(--emerald-accent);">28.3x Refit Speedup</strong></td>
+              </tr>
+              <tr>
+                <td>50,000</td>
+                <td><span class="metric-val cyan">BVH-Median</span></td>
+                <td>12,447.80 µs</td>
+                <td>53,970.90 µs</td>
+                <td>5,405,920</td>
+                <td>1,249,975,000</td>
+                <td><strong style="color: var(--emerald-accent);">99.57%</strong></td>
+                <td><strong>>1.24B Pairs Culled</strong></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Publication Figures Grid -->
+      <div class="analytics-grid">
+        <div class="chart-card">
+          <span class="panel-title">Figure 1: Query Scaling (Log-Log Scale)</span>
+          <div class="chart-img-container">
+            <img src="../analysis/figures/01_query_time_vs_n_loglog.svg" alt="Query Time Scaling Log-Log">
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <span class="panel-title">Figure 2: Tree Construction Latency vs Scale</span>
+          <div class="chart-img-container">
+            <img src="../analysis/figures/02_build_time_vs_n.svg" alt="Tree Construction Latency">
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <span class="panel-title">Figure 3: Empirical Speedup Factor vs Brute Force</span>
+          <div class="chart-img-container">
+            <img src="../analysis/figures/03_speedup_factor.svg" alt="Speedup Factor">
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <span class="panel-title">Figure 4: Hierarchical Subtree Culling Efficiency</span>
+          <div class="chart-img-container">
+            <img src="../analysis/figures/04_culling_efficiency.svg" alt="Culling Efficiency">
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <span class="panel-title">Figure 5: Performance Across 5 Spatial Distributions</span>
+          <div class="chart-img-container">
+            <img src="../analysis/figures/05_performance_across_distributions.svg" alt="Spatial Distributions">
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <span class="panel-title">Figure 8: Empirical Asymptotic Complexity Fit</span>
+          <div class="chart-img-container">
+            <img src="../analysis/figures/08_empirical_complexity_fit.svg" alt="Empirical Fit">
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 3: DSA ARCHITECTURE & COMPLEXITY GUIDE -->
+    <!-- ========================================== -->
+    <section class="tab-content" id="tab-architecture">
+      <div class="guide-content">
+
+        <!-- Column 1: Algorithms & Data Structures -->
+        <div class="glass-panel">
+          <div class="panel-header">
+            <span class="panel-title">🏗 Data Structure & Spatial Partitioning</span>
+          </div>
+
+          <h3 style="font-size: 0.95rem; color: var(--cyan-primary); margin: 0.75rem 0 0.25rem;">1. Flat-Array Cache-Resident Node Pool</h3>
+          <p style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.6;">
+            Rather than employing pointer-based tree nodes with dynamic allocations, all nodes reside in a single contiguous <code>std::vector&lt;BVHNode&gt;</code> indexed by 32-bit integer pool offsets:
+          </p>
+          <div class="code-box">struct BVHNode {
+    AABB bounds;        // 16 bytes: float min[2], max[2]
+    int left = -1;      // 4 bytes: Child index offset
+    int right = -1;     // 4 bytes: Child index offset
+    int object_index = -1; // 4 bytes: Leaf object index (&gt;= 0 marks leaf)
+}; // Exact 32-byte alignment (2 nodes fit perfectly per L1 cache line)</div>
+
+          <h3 style="font-size: 0.95rem; color: var(--purple-accent); margin: 1.25rem 0 0.25rem;">2. Algorithm Complexity Breakdown</h3>
+          <div class="table-responsive">
+            <table class="data-table" style="font-size: 0.78rem;">
+              <thead>
+                <tr>
+                  <th>Algorithm</th>
+                  <th>Build Complexity</th>
+                  <th>Query Complexity</th>
+                  <th>Key Trade-Off</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Median-Split</strong></td>
+                  <td>O(N log N)</td>
+                  <td>O(k + log N)</td>
+                  <td>Fastest build; heuristic partition along longest axis.</td>
+                </tr>
+                <tr>
+                  <td><strong>SAH (12-Bin)</strong></td>
+                  <td>O(N log N · B)</td>
+                  <td>O(k + log N)</td>
+                  <td>Evaluates expected cost; prunes 5% more bounding tests.</td>
+                </tr>
+                <tr>
+                  <td><strong>Fat AABB Refit</strong></td>
+                  <td>O(N) per frame</td>
+                  <td>O(k + log N)</td>
+                  <td>28.3x faster build; bottom-up bounds propagation.</td>
+                </tr>
+                <tr>
+                  <td><strong>Brute-Force</strong></td>
+                  <td>O(1)</td>
+                  <td>O(N²)</td>
+                  <td>Quadratic explosion; unviable beyond N &gt; 500.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Column 2: Physics & User Guide -->
+        <div class="glass-panel">
+          <div class="panel-header">
+            <span class="panel-title">⚡ Physics Engine & Keyboard Reference</span>
+          </div>
+
+          <h3 style="font-size: 0.95rem; color: var(--emerald-accent); margin: 0.75rem 0 0.25rem;">1. Contact Dynamics & Conservation Laws</h3>
+          <p style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.6;">
+            Features an impulse-based collision resolution engine with Symplectic Euler kinematics, Coulomb tangential friction, and Baumgarte linear positional stabilization to prevent sinking:
+          </p>
+          <div class="code-box">// Impulse equation with restitution e:
+J = -(1 + e) * (v_rel · n) / (invM_A + invM_B);
+v_A' = v_A + (J / m_A) * n;
+v_B' = v_B - (J / m_B) * n;
+
+// Coulomb friction tangential clamping:
+|J_tangent| &lt;= mu * J_normal;</div>
+
+          <h3 style="font-size: 0.95rem; color: var(--amber-accent); margin: 1.25rem 0 0.25rem;">2. Simulation Shortcut Cheat Sheet</h3>
+          <div class="table-responsive">
+            <table class="data-table" style="font-size: 0.78rem;">
+              <thead>
+                <tr><th>Input</th><th>Action</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><code>1 / 2 / 3</code></td><td>Switch Partitioning: Median / SAH / Refit</td></tr>
+                <tr><td><code>E / P / I</code></td><td>Restitution Mode: Elastic / Partial / Inelastic</td></tr>
+                <tr><td><code>F / G</code></td><td>Toggle Coulomb Friction / Environmental Gravity</td></tr>
+                <tr><td><code>T / Up / Down</code></td><td>Toggle Tree AABB Overlay & Adjust Max Render Depth</td></tr>
+                <tr><td><code>SPACE / .</code></td><td>Pause / Resume Simulation & Step Single Frame Forward</td></tr>
+                <tr><td><code>R / C</code></td><td>Reset Scene (500 circles) / Clear All Objects</td></tr>
+                <tr><td><code>+ / -</code></td><td>Spawn +50 Additional Bodies / Remove 50 Bodies</td></tr>
+                <tr><td><code>Left Click</code></td><td>Spawn a new circle at cursor coordinates</td></tr>
+                <tr><td><code>Right Drag</code></td><td>Activate Magnetic Gravity Well tractor beam</td></tr>
+                <tr><td><code>H / TAB</code></td><td>Open Reference Guide Modal / Toggle Telemetry HUD</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
