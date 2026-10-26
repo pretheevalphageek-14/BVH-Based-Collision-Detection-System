@@ -1,10 +1,8 @@
 #include "collision.h"
 #include <algorithm>
-#include <chrono>
-#include <cassert>
-#include <vector>
-#include <cmath>
 #include <cfloat>
+#include <chrono>
+#include <vector>
 
 using Clock = std::chrono::high_resolution_clock;
 

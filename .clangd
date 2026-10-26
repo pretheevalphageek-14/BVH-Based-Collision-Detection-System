@@ -1,0 +1,9 @@
+CompileFlags:
+  Add:
+    - -std=c++20
+    - -Isrc
+    - -Iinclude
+    - -Ibenchmarks/include
+    - -Ibuild/vcpkg_installed/x64-windows/include
+    - -Wno-unknown-pragmas
+    - -Wno-unused-command-line-argument

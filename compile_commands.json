@@ -1,0 +1,80 @@
+[
+  {
+    "directory": "d:/DSA - BVH in Physics Engines",
+    "arguments": [
+      "clang++",
+      "-std=c++20",
+      "-I",
+      "d:/DSA - BVH in Physics Engines/src",
+      "-I",
+      "d:/DSA - BVH in Physics Engines/include",
+      "-I",
+      "d:/DSA - BVH in Physics Engines/build/vcpkg_installed/x64-windows/include",
+      "-c",
+      "src/main.cpp"
+    ],
+    "file": "src/main.cpp"
+  },
+  {
+    "directory": "d:/DSA - BVH in Physics Engines",
+    "arguments": [
+      "clang++",
+      "-std=c++20",
+      "-I",
+      "d:/DSA - BVH in Physics Engines/src",
+      "-I",
+      "d:/DSA - BVH in Physics Engines/include",
+      "-I",
+      "d:/DSA - BVH in Physics Engines/build/vcpkg_installed/x64-windows/include",
+      "-c",
+      "src/collision.cpp"
+    ],
+    "file": "src/collision.cpp"
+  },
+  {
+    "directory": "d:/DSA - BVH in Physics Engines",
+    "arguments": [
+      "clang++",
+      "-std=c++20",
+      "-I",
+      "d:/DSA - BVH in Physics Engines/src",
+      "-I",
+      "d:/DSA - BVH in Physics Engines/include",
+      "-I",
+      "d:/DSA - BVH in Physics Engines/build/vcpkg_installed/x64-windows/include",
+      "-c",
+      "src/physics.cpp"
+    ],
+    "file": "src/physics.cpp"
+  },
+  {
+    "directory": "d:/DSA - BVH in Physics Engines",
+    "arguments": [
+      "clang++",
+      "-std=c++20",
+      "-I",
+      "d:/DSA - BVH in Physics Engines/src",
+      "-I",
+      "d:/DSA - BVH in Physics Engines/include",
+      "-I",
+      "d:/DSA - BVH in Physics Engines/benchmarks/include",
+      "-c",
+      "benchmarks/src/benchmark_runner.cpp"
+    ],
+    "file": "benchmarks/src/benchmark_runner.cpp"
+  },
+  {
+    "directory": "d:/DSA - BVH in Physics Engines",
+    "arguments": [
+      "clang++",
+      "-std=c++20",
+      "-I",
+      "d:/DSA - BVH in Physics Engines/src",
+      "-I",
+      "d:/DSA - BVH in Physics Engines/include",
+      "-c",
+      "tests/test_physics.cpp"
+    ],
+    "file": "tests/test_physics.cpp"
+  }
+]

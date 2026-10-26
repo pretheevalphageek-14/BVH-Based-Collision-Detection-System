@@ -1,12 +1,10 @@
 #include <SDL3/SDL.h>
 #include <chrono>
-#include <cstdio>
 #include <cmath>
-#include <vector>
-#include <algorithm>
-#include <cstdlib>
-#include <string>
+#include <cstdio>
+#include <cstring>
 #include <random>
+#include <vector>
 #include "collision.h"
 #include "physics.h"
 #include "logger.h"
@@ -360,7 +358,7 @@ int main(int argc, char** argv) {
              build_cfg, __DATE__, __TIME__, WINDOW_W, WINDOW_H, (double)DT);
 
     for (int i = 1; i < argc; ++i) {
-        if (std::string(argv[i]) == "--bench") {
+        if (std::strcmp(argv[i], "--bench") == 0) {
             LOG_INFO("flag '--bench' detected: running headless benchmark suite");
             runBenchmarks();
             bvhlog::shutdown();

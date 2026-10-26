@@ -2,7 +2,7 @@
 #include "physics.h"
 #include <iostream>
 #include <cmath>
-#include <cassert>
+#include <string>
 #include <vector>
 
 void reportTest(const std::string& testName, bool passed) {
